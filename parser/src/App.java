@@ -1,4 +1,3 @@
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -7,16 +6,16 @@ public class App {
     public static void main(String[] args) throws Exception {
         System.out.println("Hello, World!");
         Pattern pattern = Pattern.compile("-?\\d+");
-System.out.println("this"+pattern.matcher("-123ui1").matches());
-Matcher m=pattern.matcher("-123ui1");
-System.out.println("   "+m.find());
+        System.out.println("this"+pattern.matcher("-123ui1").matches());
+        Matcher m=pattern.matcher("-123ui1");
+        System.out.println("   "+m.find());
 
-System.out.println(m.group());
-System.out.println(pattern.matcher("12345").matches());
-System.out.println(pattern.matcher("123456789").matches());
+        System.out.println(m.group());
+        System.out.println(pattern.matcher("12345").matches());
+        System.out.println(pattern.matcher("123456789").matches());
 
         Scanner scanner=new Scanner();
-        for (Token t: scanner.scan("-123ui,-1,[123...  234 ]{[3], [45] } [123...  234 ],52")){
+        for (Token t: scanner.scan("-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52")){
             System.out.println(t);
         };
         
@@ -79,9 +78,9 @@ class C99Parser extends Parser{
         return output;
     }
 
-    String initializers(){
-        return initializer();
-    }
+    // String initializers(){
+    //     return initializer();
+    // }
 
     String initializer(ArrayList <String> aux){
         // check if look next digit
@@ -113,13 +112,18 @@ class Token{
 }
 
 class Range extends Token{
-    int start=0;
-    int end=0;
+    String start;
+    String end;
 
-    public Range(int start, int end){
+    public Range(String start, String end){
         super("RANGE", "RANGE");
         this.start=start;
         this.end=end;
+    }
+
+    @Override
+    public String toString() {
+        return "RANGE: "+ start+" -> "+end;
     }
     
 }
@@ -143,7 +147,16 @@ class Scanner{
                 continue;
             }
             if (matcherRange.find(i)  && matcherRange.start()==i  ){
-                tokens.add(new Token("RANGE", matcherRange.group()));
+                String range=matcherRange.group();
+                String[] nums=new String[2];
+                Matcher numbers=patternNumber.matcher(range);
+                int j=0;
+                while(numbers.find()){
+                   nums[j]=numbers.group(); 
+                   j++;
+                }
+                tokens.add(new Range(nums[0],nums[1] ));
+
                 i=matcherRange.end()-1;
             }
             else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
