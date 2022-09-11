@@ -13,13 +13,15 @@ public class App {
         System.out.println(m.group());
         System.out.println(pattern.matcher("12345").matches());
         System.out.println(pattern.matcher("123456789").matches());
-
+        // "-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52"
         Scanner scanner=new Scanner();
-        for (Token t: scanner.scan("-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52")){
+        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6]=33,}");
+        for (Token t: tokens ){
             System.out.println(t);
         };
         
-
+        C99Parser parser=new C99Parser(tokens);
+        System.out.println(parser.parse());
     }
 }
 
@@ -30,6 +32,7 @@ class Parser{
     public Parser(ArrayList<Token> tokens){
         this.tokens=tokens;
         this.index=0;
+        this.lookahead=nextToken();
 
     }
 
@@ -58,43 +61,57 @@ class C99Parser extends Parser{
         super(tokens);
     }
 
+    String parse(){
+        return val();
+    }
+
     String val(){
-        ArrayList<String> aux=new ArrayList<>();
+        
         if(this.check("INT")){
             Token t=this.nextToken();
             this.match("INT");
             return t.lexeme;
         }
         else if(this.check("{")){
-            
+            ArrayList<String> aux=new ArrayList<>();
+            this.match("{");
+            initializers(aux);
+            String output="[";
+
+            for (int i=0;i<aux.size();i++){
+                output+=aux.get(i);
+            }
+    
+            return output;
+        }
+        else{
+            return "";
         }
 
-        String output="[";
-
-        for (int i=0;i<aux.size();i++){
-            output+=aux.get(i);
-        }
-
-        return output;
     }
 
-    // String initializers(){
-    //     return initializer();
-    // }
+    String initializers(ArrayList<String> aux){
+        return initializer(aux);
+    }
 
     String initializer(ArrayList <String> aux){
         // check if SIMPLE INITILAER
         // doo the same as following
-        
-        if(this.check("RANGE")){
+        if(this.check("SIMPLE")){
+
+        }
+        else if(this.check("RANGE")){
             // get the look ahead VAL (after ""="")
             // call val
             // and set output to the ranges of the arraylist
             // if look ahead not satisfied throw ERROR
         }
+        
         // if val: evaluate val and add to the end of arraylist 
-        
-        
+        else if(this.check("INT") || this.check("{")){
+            aux.add(this.val());
+             
+        }        
         return "";
     }
 }
@@ -129,6 +146,20 @@ class Range extends Token{
         return "RANGE: "+ start+" -> "+end;
     }
     
+}
+
+class SimpleInitializer extends Token{
+    String index;
+
+    public SimpleInitializer(String index){
+        super("SIMPLE", "SIMPLE");
+        this.index=index;
+    }
+
+    @Override
+    public String toString() {
+        return "SIMPLE: "+index;
+    }
 }
 
 class Scanner{
