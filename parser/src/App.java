@@ -85,7 +85,11 @@ class C99Parser extends Parser{
 
     String initializer(ArrayList <String> aux){
         // check if look next digit
+        
         // range OR
+        if(this.check("RANGE")){
+
+        }
         // SIMPLe
         // OR VAL
         
@@ -108,11 +112,17 @@ class Token{
     }
 }
 
-// class Range extends Token{
-//     public Range(String lexeme){
-//         super("RANGE", lexeme);
-//     }
-// }
+class Range extends Token{
+    int start=0;
+    int end=0;
+
+    public Range(int start, int end){
+        super("RANGE", "RANGE");
+        this.start=start;
+        this.end=end;
+    }
+    
+}
 
 class Scanner{
     ArrayList<Token> tokens;
