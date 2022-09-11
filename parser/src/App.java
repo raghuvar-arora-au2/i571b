@@ -1,3 +1,4 @@
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,11 +24,11 @@ System.out.println(pattern.matcher("123456789").matches());
     }
 }
 
-class parser{
+class Parser{
     ArrayList<Token> tokens;
     int index;
     Token lookahead;
-    public parser(ArrayList<Token> tokens){
+    public Parser(ArrayList<Token> tokens){
         this.tokens=tokens;
         this.index=0;
 
@@ -46,11 +47,50 @@ class parser{
             this.lookahead=nextToken();
         }
         else{
-            //error
+            // throw error
         }
     }
 
-    
+}
+
+class C99Parser extends Parser{
+
+    public C99Parser(ArrayList<Token> tokens){
+        super(tokens);
+    }
+
+    String val(){
+        ArrayList<String> aux=new ArrayList<>();
+        if(this.check("INT")){
+            Token t=this.nextToken();
+            this.match("INT");
+            return t.lexeme;
+        }
+        else if(this.check("{")){
+
+        }
+
+        String output="[";
+
+        for (int i=0;i<aux.size();i++){
+            output+=aux.get(i);
+        }
+
+        return output;
+    }
+
+    String initializers(){
+        return initializer();
+    }
+
+    String initializer(ArrayList <String> aux){
+        // check if look next digit
+        // range OR
+        // SIMPLe
+        // OR VAL
+        
+        return "";
+    }
 }
 
 class Token{
@@ -110,6 +150,9 @@ class Scanner{
             }
             else if(str.charAt(i)=='}'){
                 tokens.add(new Token("}", "}"));
+            }
+            else if(str.charAt(i)=='='){
+                tokens.add(new Token("=", "="));
             }
 
         }
