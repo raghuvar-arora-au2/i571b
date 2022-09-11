@@ -114,6 +114,32 @@ class C99Parser extends Parser{
         }        
         return "";
     }
+
+    private void intializeUsingSimpleInitializer(ArrayList<String> aux, int index, String val){
+        if(aux.size()<index){
+            for(int i=aux.size()-1;i<=index;i++){
+                aux.add("0");
+            }
+        }
+
+        aux.set(index, val);
+    }
+    
+    private void intializeUsingRange(ArrayList<String> aux, int start, int end, String val){
+        if(end<start){        
+            //TODO: throw error
+        }
+        else if(end> aux.size()) {
+            for(int i=aux.size()-1;i<=end;i++){
+                aux.add("0");
+            }
+        }
+        
+        for(int i=aux.size()-1;i<=end;i++){
+            aux.set(i,val);
+        }
+
+    }
 }
 
 class Token{
@@ -194,7 +220,10 @@ class Scanner{
                 i=matcherRange.end()-1;
             }
             else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
-                tokens.add(new Token("SIMPLE", matcherSimpleInitializer.group()));
+                System.out.print(matcherSimpleInitializer.group());
+                Matcher matcher= patternNumber.matcher("1234]");
+                matcher.find();
+                tokens.add(new SimpleInitializer(matcher.group()) );
                 i=matcherSimpleInitializer.end()-1;
             }
             else if(matcherNumber.find(i) && matcherNumber.start()==i){
