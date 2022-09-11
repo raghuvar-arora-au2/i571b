@@ -66,7 +66,7 @@ class C99Parser extends Parser{
             return t.lexeme;
         }
         else if(this.check("{")){
-
+            
         }
 
         String output="[";
@@ -83,14 +83,17 @@ class C99Parser extends Parser{
     // }
 
     String initializer(ArrayList <String> aux){
-        // check if look next digit
+        // check if SIMPLE INITILAER
+        // doo the same as following
         
-        // range OR
         if(this.check("RANGE")){
-
+            // get the look ahead VAL (after ""="")
+            // call val
+            // and set output to the ranges of the arraylist
+            // if look ahead not satisfied throw ERROR
         }
-        // SIMPLe
-        // OR VAL
+        // if val: evaluate val and add to the end of arraylist 
+        
         
         return "";
     }
