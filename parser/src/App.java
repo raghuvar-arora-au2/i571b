@@ -26,16 +26,31 @@ System.out.println(pattern.matcher("123456789").matches());
 class parser{
     ArrayList<Token> tokens;
     int index;
-    int lookahead;
+    Token lookahead;
     public parser(ArrayList<Token> tokens){
         this.tokens=tokens;
         this.index=0;
 
     }
 
-    int nextToken(){
-        return 0;
+    Token nextToken(){
+        return this.tokens.get(index++);
     }
+
+    boolean check(String kind){
+        return lookahead.kind.equals(kind);
+    }
+
+    void match(String kind){
+        if(this.check(kind)){
+            this.lookahead=nextToken();
+        }
+        else{
+            //error
+        }
+    }
+
+    
 }
 
 class Token{
