@@ -15,7 +15,7 @@ public class App {
         System.out.println(pattern.matcher("123456789").matches());
         // "-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52"
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6]=33,}");
+        ArrayList<Token> tokens=scanner.scan("{22, {44, 99, {1,2,34}},[5...10]=10, [6]=33,}");
         for (Token t: tokens ){
             System.out.println(t);
         };
@@ -37,7 +37,11 @@ class Parser{
     }
 
     Token nextToken(){
-        return this.tokens.get(index++);
+        if(this.index<tokens.size())
+            return this.tokens.get(index++);
+        else{
+            return new Token("EOF", "EOF");
+        }
     }
 
     boolean check(String kind){
@@ -68,7 +72,7 @@ class C99Parser extends Parser{
     String val(){
         
         if(this.check("INT")){
-            Token t=this.nextToken();
+            Token t=lookahead;
             this.match("INT");
             return t.lexeme;
         }
@@ -79,9 +83,11 @@ class C99Parser extends Parser{
             String output="[";
 
             for (int i=0;i<aux.size();i++){
-                output+=aux.get(i);
+                output+=aux.get(i)+", ";
             }
-    
+
+            this.match("}");
+            output+="]";
             return output;
         }
         else{
@@ -90,11 +96,17 @@ class C99Parser extends Parser{
 
     }
 
-    String initializers(ArrayList<String> aux){
-        return initializer(aux);
+    void initializers(ArrayList<String> aux){
+        
+        initializer(aux);
+        while(this.check(",")){
+            this.match(",");
+            initializer(aux);
+        }
+
     }
 
-    String initializer(ArrayList <String> aux){
+    void initializer(ArrayList <String> aux){
         // check if SIMPLE INITILAER
         // doo the same as following
         if(this.check("SIMPLE")){
@@ -136,12 +148,12 @@ class C99Parser extends Parser{
             aux.add(this.val());
              
         }        
-        return "";
+        
     }
 
     private void intializeUsingSimpleInitializer(ArrayList<String> aux, int index, String val){
         if(aux.size()<index){
-            for(int i=aux.size()-1;i<=index;i++){
+            for(int i=aux.size()-1;i<index;i++){
                 aux.add("0");
             }
         }
@@ -154,12 +166,12 @@ class C99Parser extends Parser{
             //TODO: throw error
         }
         else if(end> aux.size()) {
-            for(int i=aux.size()-1;i<=end;i++){
+            for(int i=aux.size()-1;i<end;i++){
                 aux.add("0");
             }
         }
         
-        for(int i=aux.size()-1;i<=end;i++){
+        for(int i=start;i<end;i++){
             aux.set(i,val);
         }
 
@@ -244,8 +256,8 @@ class Scanner{
                 i=matcherRange.end()-1;
             }
             else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
-                System.out.print(matcherSimpleInitializer.group());
-                Matcher matcher= patternNumber.matcher("1234]");
+                // System.out.print(matcherSimpleInitializer.group());
+                Matcher matcher= patternNumber.matcher(matcherSimpleInitializer.group());
                 matcher.find();
                 tokens.add(new SimpleInitializer(matcher.group()) );
                 i=matcherSimpleInitializer.end()-1;
@@ -263,6 +275,9 @@ class Scanner{
             }
             else if(str.charAt(i)=='='){
                 tokens.add(new Token("=", "="));
+            }
+            else if( str.charAt(i)==','){
+                tokens.add(new Token(",", ","));
             }
 
         }
