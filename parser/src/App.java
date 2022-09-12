@@ -15,7 +15,7 @@ public class App {
         System.out.println(pattern.matcher("123456789").matches());
         // "-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52"
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{22, {44, 99, {1,2,34}},[5...10]=10, [6]=33,}");
+        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]=33,}");
         for (Token t: tokens ){
             System.out.println(t);
         };
@@ -83,7 +83,12 @@ class C99Parser extends Parser{
             String output="[";
 
             for (int i=0;i<aux.size();i++){
-                output+=aux.get(i)+", ";
+                if(i<aux.size()-1){
+                    output+=aux.get(i)+", ";
+                }
+                else{
+                    output+=aux.get(i);
+                }
             }
 
             this.match("}");
@@ -171,7 +176,7 @@ class C99Parser extends Parser{
             }
         }
         
-        for(int i=start;i<end;i++){
+        for(int i=start;i<=end;i++){
             aux.set(i,val);
         }
 
