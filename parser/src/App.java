@@ -98,13 +98,37 @@ class C99Parser extends Parser{
         // check if SIMPLE INITILAER
         // doo the same as following
         if(this.check("SIMPLE")){
-
+            SimpleInitializer t=(SimpleInitializer)this.lookahead;
+            this.match("SIMPLE");
+            if(this.check("=")){
+                this.match("=");
+                String val=val();
+                intializeUsingSimpleInitializer(aux, Integer.parseInt(t.index) , val);
+            }
+            else{
+                //TODO: throw error
+            }
+            
         }
         else if(this.check("RANGE")){
             // get the look ahead VAL (after ""="")
             // call val
             // and set output to the ranges of the arraylist
             // if look ahead not satisfied throw ERROR
+            Range t=(Range)this.lookahead;
+            this.match("RANGE");
+            if(this.check("=")){
+                this.match("=");
+                String val=val();
+                int start=Integer.parseInt(t.start);
+                int end=Integer.parseInt(t.end);
+
+                intializeUsingRange(aux, start, end, val);
+            }
+            else{
+                //TODO: throw error
+            }
+
         }
         
         // if val: evaluate val and add to the end of arraylist 
