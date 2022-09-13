@@ -66,7 +66,12 @@ class C99Parser extends Parser{
     }
 
     String parse() throws Exception{
-        return val();
+        String val=val();
+        if(this.check("EOF"))
+            return val;
+        else{
+            throw new Exception("error: expecting 'EOF' but got '"+this.lookahead.lexeme+"'");
+        }
     }
 
     String val() throws Exception{
@@ -96,7 +101,7 @@ class C99Parser extends Parser{
             return output;
         }
         else{
-            return "";
+            throw new Exception("error: expecting '{' but got '"+this.lookahead.lexeme+"'");
         }
 
     }
@@ -111,6 +116,51 @@ class C99Parser extends Parser{
 
     }
 
+    void parseRangeInitializer(ArrayList <String> aux, Token startIndex) throws Exception{
+        
+        this.match("...");
+        if(this.check("INT")){
+            Token endIndex=this.lookahead;
+            this.match("INT");
+            if(this.check("]")){
+                this.match("]");
+            }
+            else{
+                throw new Exception("error: expecting ']' but got '"+this.lookahead.lexeme+"'");
+                
+            }
+
+            if(this.check("=")){
+                this.match("=");
+            }
+            else{
+                
+                throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
+            }
+
+            String val=val();
+            intializeUsingRange(aux, Integer.parseInt(startIndex.lexeme), Integer.parseInt(endIndex.lexeme), val);
+        }
+        else{
+            
+            throw new Exception("error: expecting INT but got '"+this.lookahead.lexeme+"'");
+        }
+        
+    }
+
+    void parseSimpleDesignatedInitializer(ArrayList <String> aux, Token index) throws Exception{
+        this.match("]");
+
+        if(this.check("=")){
+            this.match("=");
+            String val=val();
+            intializeUsingSimpleInitializer(aux, Integer.parseInt(index.lexeme), val);
+        }
+        else{
+            throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
+        }
+    }
+
     void initializer(ArrayList <String> aux) throws Exception{
         if(this.check("[")){
             this.match("[");
@@ -119,45 +169,10 @@ class C99Parser extends Parser{
                 this.match("INT");
 
                 if(this.check("...")){
-                    this.match("...");
-                    if(this.check("INT")){
-                        Token endIndex=this.lookahead;
-                        this.match("INT");
-                        if(this.check("]")){
-                            this.match("]");
-                        }
-                        else{
-                            throw new Exception("error: expecting ']' but got '"+this.lookahead.lexeme+"'");
-                            
-                        }
-
-                        if(this.check("=")){
-                            this.match("=");
-                        }
-                        else{
-                            
-                            throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
-                        }
-
-                        String val=val();
-                        intializeUsingRange(aux, Integer.parseInt(startIndex.lexeme), Integer.parseInt(endIndex.lexeme), val);
-                    }
-                    else{
-                        
-                        throw new Exception("error: expecting INT but got '"+this.lookahead.lexeme+"'");
-                    }
+                    parseRangeInitializer(aux, startIndex);
                 }
                 else if(this.check("]")){
-                    this.match("]");
-
-                    if(this.check("=")){
-                        this.match("=");
-                        String val=val();
-                        intializeUsingSimpleInitializer(aux, Integer.parseInt(startIndex.lexeme), val);
-                    }
-                    else{
-                        throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
-                    }
+                    parseSimpleDesignatedInitializer(aux, startIndex);
                 }
                 else{
                     throw new Exception("error: expecting ']' but got '"+this.lookahead.lexeme+"'");
@@ -219,36 +234,6 @@ class Token{
     }
 }
 
-class Range extends Token{
-    String start;
-    String end;
-
-    public Range(String start, String end){
-        super("RANGE", "RANGE");
-        this.start=start;
-        this.end=end;
-    }
-
-    @Override
-    public String toString() {
-        return "RANGE: "+ start+" -> "+end;
-    }
-    
-}
-
-class SimpleInitializer extends Token{
-    String index;
-
-    public SimpleInitializer(String index){
-        super("SIMPLE", "SIMPLE");
-        this.index=index;
-    }
-
-    @Override
-    public String toString() {
-        return "SIMPLE: "+index;
-    }
-}
 
 class Scanner{
     ArrayList<Token> tokens;
