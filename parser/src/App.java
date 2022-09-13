@@ -15,7 +15,7 @@ public class App {
         System.out.println(pattern.matcher("123456789").matches());
         
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,}");
+        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,,}");
         for (Token t: tokens ){
             System.out.println(t);
         };
@@ -53,7 +53,7 @@ class Parser{
             this.lookahead=nextToken();
         }
         else{
-            // throw error
+            // TODO:throw error
         }
     }
 
@@ -186,9 +186,9 @@ class C99Parser extends Parser{
             aux.add(this.val());
              
         }
-        // else{
-        //     throw new Exception("error: expecting '[' but got '"+this.lookahead.lexeme+"'");
-        // }       
+        else if(this.check(",")){
+            throw new Exception("error: expecting '}' but got '"+this.lookahead.lexeme+"'");
+        }       
         
     }
 
