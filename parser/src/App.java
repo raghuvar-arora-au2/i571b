@@ -112,41 +112,93 @@ class C99Parser extends Parser{
     }
 
     void initializer(ArrayList <String> aux){
+        if(this.check("[")){
+            this.match("[");
+            if(this.check("INT")){
+                Token startIndex=this.lookahead;
+                this.match("INT");
+
+                if(this.check("...")){
+                    this.match("...");
+                    if(this.check("INT")){
+                        Token endIndex=this.lookahead;
+                        this.match("INT");
+                        if(this.check("]")){
+                            this.match("]");
+                        }
+                        else{
+                            //TODO: Throw error
+                        }
+
+                        if(this.check("=")){
+                            this.match("=");
+                        }
+                        else{
+                            //TODO: Throw error
+                        }
+
+                        String val=val();
+                        intializeUsingRange(aux, Integer.parseInt(startIndex.lexeme), Integer.parseInt(endIndex.lexeme), val);
+                    }
+                    else{
+                        //TODO: Throw error
+                    }
+                }
+                else if(this.check("]")){
+                    this.match("]");
+
+                    if(this.check("=")){
+                        this.match("=");
+                        String val=val();
+                        intializeUsingSimpleInitializer(aux, Integer.parseInt(startIndex.lexeme), val);
+                    }
+                    else{
+                        //TODO: Throw error
+                    }
+                }
+                else{
+                    //TODO: Throw error
+                }
+            }
+            else{
+                //TODO: Throw error
+            }
+        }
         // check if SIMPLE INITILAER
         // doo the same as following
-        if(this.check("SIMPLE")){
-            SimpleInitializer t=(SimpleInitializer)this.lookahead;
-            this.match("SIMPLE");
-            if(this.check("=")){
-                this.match("=");
-                String val=val();
-                intializeUsingSimpleInitializer(aux, Integer.parseInt(t.index) , val);
-            }
-            else{
-                //TODO: throw error
-            }
+        // if(this.check("SIMPLE")){
+        //     SimpleInitializer t=(SimpleInitializer)this.lookahead;
+        //     this.match("SIMPLE");
+        //     if(this.check("=")){
+        //         this.match("=");
+        //         String val=val();
+        //         intializeUsingSimpleInitializer(aux, Integer.parseInt(t.index) , val);
+        //     }
+        //     else{
+        //         //TODO: throw error
+        //     }
             
-        }
-        else if(this.check("RANGE")){
-            // get the look ahead VAL (after ""="")
-            // call val
-            // and set output to the ranges of the arraylist
-            // if look ahead not satisfied throw ERROR
-            Range t=(Range)this.lookahead;
-            this.match("RANGE");
-            if(this.check("=")){
-                this.match("=");
-                String val=val();
-                int start=Integer.parseInt(t.start);
-                int end=Integer.parseInt(t.end);
+        // }
+        // else if(this.check("RANGE")){
+        //     // get the look ahead VAL (after ""="")
+        //     // call val
+        //     // and set output to the ranges of the arraylist
+        //     // if look ahead not satisfied throw ERROR
+        //     Range t=(Range)this.lookahead;
+        //     this.match("RANGE");
+        //     if(this.check("=")){
+        //         this.match("=");
+        //         String val=val();
+        //         int start=Integer.parseInt(t.start);
+        //         int end=Integer.parseInt(t.end);
 
-                intializeUsingRange(aux, start, end, val);
-            }
-            else{
-                //TODO: throw error
-            }
+        //         intializeUsingRange(aux, start, end, val);
+        //     }
+        //     else{
+        //         //TODO: throw error
+        //     }
 
-        }
+        // }
         
         // if val: evaluate val and add to the end of arraylist 
         else if(this.check("INT") || this.check("{")){
@@ -243,30 +295,42 @@ class Scanner{
         Matcher matcherNumber=patternNumber.matcher(str);
         Matcher matcherRange=patternRange.matcher(str);
         Matcher matcherSimpleInitializer=patternSimpleInitializer.matcher(str);
+        
         for(int i=0;i<str.length();i++){
             if(str.charAt(i)==' '){
                 continue;
             }
-            if (matcherRange.find(i)  && matcherRange.start()==i  ){
-                String range=matcherRange.group();
-                String[] nums=new String[2];
-                Matcher numbers=patternNumber.matcher(range);
-                int j=0;
-                while(numbers.find()){
-                   nums[j]=numbers.group(); 
-                   j++;
-                }
-                tokens.add(new Range(nums[0],nums[1] ));
+            // if (matcherRange.find(i)  && matcherRange.start()==i  ){
+            //     String range=matcherRange.group();
+            //     String[] nums=new String[2];
+            //     Matcher numbers=patternNumber.matcher(range);
+            //     int j=0;
+            //     while(numbers.find()){
+            //        nums[j]=numbers.group(); 
+            //        j++;
+            //     }
+            //     tokens.add(new Range(nums[0],nums[1] ));
 
-                i=matcherRange.end()-1;
+            //     i=matcherRange.end()-1;
+            // }
+            else if(str.charAt(i)=='['){
+                tokens.add(new Token("[", "["));
+
             }
-            else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
-                // System.out.print(matcherSimpleInitializer.group());
-                Matcher matcher= patternNumber.matcher(matcherSimpleInitializer.group());
-                matcher.find();
-                tokens.add(new SimpleInitializer(matcher.group()) );
-                i=matcherSimpleInitializer.end()-1;
+            else if(str.charAt(i)==']'){
+                tokens.add(new Token("]", "]"));
             }
+            else if(i+3<str.length() && str.substring(i, i+3).equals("...")){
+                tokens.add(new Token("...","..."));
+                i=i+2;
+            }
+            // else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
+            //     // System.out.print(matcherSimpleInitializer.group());
+            //     Matcher matcher= patternNumber.matcher(matcherSimpleInitializer.group());
+            //     matcher.find();
+            //     tokens.add(new SimpleInitializer(matcher.group()) );
+            //     i=matcherSimpleInitializer.end()-1;
+            // }
             else if(matcherNumber.find(i) && matcherNumber.start()==i){
                 tokens.add(new Token("INT", matcherNumber.group()));
                 i=matcherNumber.end()-1;
@@ -283,6 +347,9 @@ class Scanner{
             }
             else if( str.charAt(i)==','){
                 tokens.add(new Token(",", ","));
+            }
+            else{
+                tokens.add(new Token(str.substring(i, i+1),str.substring(i, i+1)));
             }
 
         }
