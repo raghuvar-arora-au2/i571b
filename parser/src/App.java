@@ -13,9 +13,9 @@ public class App {
         System.out.println(m.group());
         System.out.println(pattern.matcher("12345").matches());
         System.out.println(pattern.matcher("123456789").matches());
-        // "-123ui,-1,[123...  234 ]{[3], [45] } [123...  2534 ],52"
+        
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]=33,}");
+        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,}");
         for (Token t: tokens ){
             System.out.println(t);
         };
@@ -65,11 +65,11 @@ class C99Parser extends Parser{
         super(tokens);
     }
 
-    String parse(){
+    String parse() throws Exception{
         return val();
     }
 
-    String val(){
+    String val() throws Exception{
         
         if(this.check("INT")){
             Token t=lookahead;
@@ -101,7 +101,7 @@ class C99Parser extends Parser{
 
     }
 
-    void initializers(ArrayList<String> aux){
+    void initializers(ArrayList<String> aux) throws Exception{
         
         initializer(aux);
         while(this.check(",")){
@@ -111,7 +111,7 @@ class C99Parser extends Parser{
 
     }
 
-    void initializer(ArrayList <String> aux){
+    void initializer(ArrayList <String> aux) throws Exception{
         if(this.check("[")){
             this.match("[");
             if(this.check("INT")){
@@ -127,21 +127,24 @@ class C99Parser extends Parser{
                             this.match("]");
                         }
                         else{
-                            //TODO: Throw error
+                            throw new Exception("error: expecting ']' but got '"+this.lookahead.lexeme+"'");
+                            
                         }
 
                         if(this.check("=")){
                             this.match("=");
                         }
                         else{
-                            //TODO: Throw error
+                            
+                            throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
                         }
 
                         String val=val();
                         intializeUsingRange(aux, Integer.parseInt(startIndex.lexeme), Integer.parseInt(endIndex.lexeme), val);
                     }
                     else{
-                        //TODO: Throw error
+                        
+                        throw new Exception("error: expecting INT but got '"+this.lookahead.lexeme+"'");
                     }
                 }
                 else if(this.check("]")){
@@ -153,58 +156,24 @@ class C99Parser extends Parser{
                         intializeUsingSimpleInitializer(aux, Integer.parseInt(startIndex.lexeme), val);
                     }
                     else{
-                        //TODO: Throw error
+                        throw new Exception("error: expecting '=' but got '"+this.lookahead.lexeme+"'");
                     }
                 }
                 else{
-                    //TODO: Throw error
+                    throw new Exception("error: expecting ']' but got '"+this.lookahead.lexeme+"'");
                 }
             }
             else{
-                //TODO: Throw error
+                throw new Exception("error: expecting INT but got '"+this.lookahead.lexeme+"'");
             }
         }
-        // check if SIMPLE INITILAER
-        // doo the same as following
-        // if(this.check("SIMPLE")){
-        //     SimpleInitializer t=(SimpleInitializer)this.lookahead;
-        //     this.match("SIMPLE");
-        //     if(this.check("=")){
-        //         this.match("=");
-        //         String val=val();
-        //         intializeUsingSimpleInitializer(aux, Integer.parseInt(t.index) , val);
-        //     }
-        //     else{
-        //         //TODO: throw error
-        //     }
-            
-        // }
-        // else if(this.check("RANGE")){
-        //     // get the look ahead VAL (after ""="")
-        //     // call val
-        //     // and set output to the ranges of the arraylist
-        //     // if look ahead not satisfied throw ERROR
-        //     Range t=(Range)this.lookahead;
-        //     this.match("RANGE");
-        //     if(this.check("=")){
-        //         this.match("=");
-        //         String val=val();
-        //         int start=Integer.parseInt(t.start);
-        //         int end=Integer.parseInt(t.end);
-
-        //         intializeUsingRange(aux, start, end, val);
-        //     }
-        //     else{
-        //         //TODO: throw error
-        //     }
-
-        // }
-        
-        // if val: evaluate val and add to the end of arraylist 
         else if(this.check("INT") || this.check("{")){
             aux.add(this.val());
              
-        }        
+        }
+        // else{
+        //     throw new Exception("error: expecting '[' but got '"+this.lookahead.lexeme+"'");
+        // }       
         
     }
 
@@ -218,9 +187,9 @@ class C99Parser extends Parser{
         aux.set(index, val);
     }
     
-    private void intializeUsingRange(ArrayList<String> aux, int start, int end, String val){
+    private void intializeUsingRange(ArrayList<String> aux, int start, int end, String val) throws Exception{
         if(end<start){        
-            //TODO: throw error
+            throw new Exception("error: Incorrect range");
         }
         else if(end> aux.size()) {
             for(int i=aux.size()-1;i<end;i++){
@@ -290,29 +259,11 @@ class Scanner{
 
     public ArrayList<Token> scan(String str){
         Pattern patternNumber =Pattern.compile("-?\\d+");
-        Pattern patternRange=Pattern.compile("\\[*\\s*\\d+\\s*\\.\\.\\.\\s*\\d+\\s*\\]");
-        Pattern patternSimpleInitializer=Pattern.compile("\\[*\\s*\\d+\\s*\\]");
-        Matcher matcherNumber=patternNumber.matcher(str);
-        Matcher matcherRange=patternRange.matcher(str);
-        Matcher matcherSimpleInitializer=patternSimpleInitializer.matcher(str);
-        
+        Matcher matcherNumber=patternNumber.matcher(str);      
         for(int i=0;i<str.length();i++){
             if(str.charAt(i)==' '){
                 continue;
             }
-            // if (matcherRange.find(i)  && matcherRange.start()==i  ){
-            //     String range=matcherRange.group();
-            //     String[] nums=new String[2];
-            //     Matcher numbers=patternNumber.matcher(range);
-            //     int j=0;
-            //     while(numbers.find()){
-            //        nums[j]=numbers.group(); 
-            //        j++;
-            //     }
-            //     tokens.add(new Range(nums[0],nums[1] ));
-
-            //     i=matcherRange.end()-1;
-            // }
             else if(str.charAt(i)=='['){
                 tokens.add(new Token("[", "["));
 
@@ -324,13 +275,6 @@ class Scanner{
                 tokens.add(new Token("...","..."));
                 i=i+2;
             }
-            // else if (matcherSimpleInitializer.find(i) && matcherSimpleInitializer.start()==i){
-            //     // System.out.print(matcherSimpleInitializer.group());
-            //     Matcher matcher= patternNumber.matcher(matcherSimpleInitializer.group());
-            //     matcher.find();
-            //     tokens.add(new SimpleInitializer(matcher.group()) );
-            //     i=matcherSimpleInitializer.end()-1;
-            // }
             else if(matcherNumber.find(i) && matcherNumber.start()==i){
                 tokens.add(new Token("INT", matcherNumber.group()));
                 i=matcherNumber.end()-1;
