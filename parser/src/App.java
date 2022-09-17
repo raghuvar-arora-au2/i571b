@@ -4,24 +4,28 @@ import java.util.regex.Pattern;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        System.out.println("Hello, World!");
-        Pattern pattern = Pattern.compile("-?\\d+");
-        System.out.println("this"+pattern.matcher("-123ui1").matches());
-        Matcher m=pattern.matcher("-123ui1");
-        System.out.println("   "+m.find());
+        // System.out.println("Hello, World!");
+        // Pattern pattern = Pattern.compile("-?\\d+");
+        // System.out.println("this"+pattern.matcher("-123ui1").matches());
+        // Matcher m=pattern.matcher("-123ui1");
+        // System.out.println("   "+m.find());
 
-        System.out.println(m.group());
-        System.out.println(pattern.matcher("12345").matches());
-        System.out.println(pattern.matcher("123456789").matches());
+        // System.out.println(m.group());
+        // System.out.println(pattern.matcher("12345").matches());
+        // System.out.println(pattern.matcher("123456789").matches());
         
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,,}");
-        for (Token t: tokens ){
-            System.out.println(t);
-        };
+        // ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,}");
+        // for (Token t: tokens ){
+        //     System.out.println(t);
+        // };
         
+        ArrayList<Token> tokens=scanner.scan(args[0]);
+
         C99Parser parser=new C99Parser(tokens);
         System.out.println(parser.parse());
+
+        // {1,2,3,4, {,1,2,3,{1,2,3}}}
     }
 }
 
