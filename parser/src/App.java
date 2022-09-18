@@ -6,10 +6,15 @@ public class App {
     public static void main(String[] args) throws Exception {
         
         Scanner scanner=new Scanner();
-        ArrayList<Token> tokens=scanner.scan("{");
+        // ArrayList<Token> tokens=scanner.scan("{1,2,3}");
         // for (Token t: tokens ){
         //     System.out.println(t);
         // };
+        String input="";
+        for(String a: args){
+            input+=a;
+        }
+        ArrayList<Token> tokens=scanner.scan(input);
         
         C99Parser parser=new C99Parser(tokens);
         System.out.println(parser.parse());
@@ -97,7 +102,7 @@ class C99Parser extends Parser{
 
             for (int i=0;i<aux.size();i++){
                 if(i<aux.size()-1){
-                    output+=aux.get(i)+", ";
+                    output+=aux.get(i)+",";
                 }
                 else{
                     output+=aux.get(i);
