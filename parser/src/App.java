@@ -15,12 +15,12 @@ public class App {
         // System.out.println(pattern.matcher("123456789").matches());
         
         Scanner scanner=new Scanner();
-        // ArrayList<Token> tokens=scanner.scan("{22, {44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,}");
+        ArrayList<Token> tokens=scanner.scan("{22, [10...11]=10,{44, 99}, [6...8]={33, [3]=4, 77}, [7...8]=99,}");
         // for (Token t: tokens ){
         //     System.out.println(t);
         // };
         
-        ArrayList<Token> tokens=scanner.scan(args[0]);
+        // ArrayList<Token> tokens=scanner.scan(args[0]);
 
         C99Parser parser=new C99Parser(tokens);
         System.out.println(parser.parse());
@@ -29,6 +29,10 @@ public class App {
     }
 }
 
+    
+/**
+ * This class contains the common functionality for the parser 
+ */
 class Parser{
     ArrayList<Token> tokens;
     int index;
@@ -63,6 +67,9 @@ class Parser{
 
 }
 
+/**
+ * This class contains the functinality according to the grammer
+ */
 class C99Parser extends Parser{
 
     public C99Parser(ArrayList<Token> tokens){
@@ -78,6 +85,11 @@ class C99Parser extends Parser{
         }
     }
 
+    /**
+     * val
+     *  :  '{' initializer  '}'
+     *  |   INT
+    */
     String val() throws Exception{
         
         if(this.check("INT")){
@@ -110,6 +122,12 @@ class C99Parser extends Parser{
 
     }
 
+    /**
+     * initializers
+     *  : initializer ( ',' initializer )* ','? //optional comma after last init
+     *  | //empty
+     *  ;
+    */
     void initializers(ArrayList<String> aux) throws Exception{
         
         initializer(aux);
@@ -120,6 +138,10 @@ class C99Parser extends Parser{
 
     }
 
+    /**
+     * This handles the range designated initializer
+     *  Grammer:  '[' INT '...' INT ']' '=' val 
+    */
     void parseRangeInitializer(ArrayList <String> aux, Token startIndex) throws Exception{
         
         this.match("...");
@@ -152,6 +174,10 @@ class C99Parser extends Parser{
         
     }
 
+    /**
+     * This handles the simple designated initializer
+     *  Grammer : '[' INT '] '=' val       
+    */
     void parseSimpleDesignatedInitializer(ArrayList <String> aux, Token index) throws Exception{
         this.match("]");
 
@@ -165,6 +191,13 @@ class C99Parser extends Parser{
         }
     }
 
+    /**
+     * initializer
+     *  : '[' INT '] '=' val              //simple designated initializer
+     *  | '[' INT '...' INT ']' '=' val   //range designated initializer
+     *  | val                             //positional initializer
+     *  ;
+    */
     void initializer(ArrayList <String> aux) throws Exception{
         if(this.check("[")){
             this.match("[");
@@ -196,6 +229,9 @@ class C99Parser extends Parser{
         
     }
 
+    /**
+     * This sets the value to val for the given index
+    */
     private void intializeUsingSimpleInitializer(ArrayList<String> aux, int index, String val){
         if(aux.size()<index){
             for(int i=aux.size()-1;i<index;i++){
@@ -205,7 +241,9 @@ class C99Parser extends Parser{
 
         aux.set(index, val);
     }
-    
+    /**
+     * This sets the value to val for the given range
+    */
     private void intializeUsingRange(ArrayList<String> aux, int start, int end, String val) throws Exception{
         if(end<start){        
             throw new Exception("error: Incorrect range");
@@ -222,7 +260,9 @@ class C99Parser extends Parser{
 
     }
 }
-
+/**
+ * This represents individual tokens
+*/
 class Token{
     String kind;
     String lexeme;
@@ -238,7 +278,9 @@ class Token{
     }
 }
 
-
+/**
+ * This class is used to tokenize the input
+ */
 class Scanner{
     ArrayList<Token> tokens;
 
@@ -253,13 +295,13 @@ class Scanner{
             if(str.charAt(i)==' '){
                 continue;
             }
-            else if(str.charAt(i)=='['){
-                tokens.add(new Token("[", "["));
+            // else if(str.charAt(i)=='['){
+            //     tokens.add(new Token("[", "["));
 
-            }
-            else if(str.charAt(i)==']'){
-                tokens.add(new Token("]", "]"));
-            }
+            // }
+            // else if(str.charAt(i)==']'){
+            //     tokens.add(new Token("]", "]"));
+            // }
             else if(i+3<str.length() && str.substring(i, i+3).equals("...")){
                 tokens.add(new Token("...","..."));
                 i=i+2;
@@ -269,18 +311,18 @@ class Scanner{
                 i=matcherNumber.end()-1;
             }
 
-            else if (str.charAt(i)=='{'){
-                tokens.add(new Token("{", "{"));
-            }
-            else if(str.charAt(i)=='}'){
-                tokens.add(new Token("}", "}"));
-            }
-            else if(str.charAt(i)=='='){
-                tokens.add(new Token("=", "="));
-            }
-            else if( str.charAt(i)==','){
-                tokens.add(new Token(",", ","));
-            }
+            // else if (str.charAt(i)=='{'){
+            //     tokens.add(new Token("{", "{"));
+            // }
+            // else if(str.charAt(i)=='}'){
+            //     tokens.add(new Token("}", "}"));
+            // }
+            // else if(str.charAt(i)=='='){
+            //     tokens.add(new Token("=", "="));
+            // }
+            // else if( str.charAt(i)==','){
+            //     tokens.add(new Token(",", ","));
+            // }
             else{
                 tokens.add(new Token(str.substring(i, i+1),str.substring(i, i+1)));
             }
