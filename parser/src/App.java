@@ -15,7 +15,7 @@ public class App {
             input+=a;
         }
         ArrayList<Token> tokens=scanner.scan(input);
-        
+
         C99Parser parser=new C99Parser(tokens);
         System.out.println(parser.parse());
 
@@ -309,6 +309,9 @@ class Scanner{
             if(str.charAt(i)==' '){
                 continue;
             }
+            else if(str.charAt(i)=='\n'){
+                continue;
+            }
             else if(i+3<str.length() && str.substring(i, i+3).equals("...")){
                 tokens.add(new Token("...","..."));
                 i=i+2;
@@ -317,7 +320,6 @@ class Scanner{
                 tokens.add(new Token("INT", matcherNumber.group()));
                 i=matcherNumber.end()-1;
             }
-
             else{
                 tokens.add(new Token(str.substring(i, i+1),str.substring(i, i+1)));
             }
