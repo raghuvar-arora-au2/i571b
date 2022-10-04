@@ -9,7 +9,7 @@ bnumber: 965352
 GitHub account: raghuvar-arora-au2
 
 
-##Project 1
+## Project 1
 1) no MAKE file required 
 
 
@@ -17,4 +17,6 @@ GitHub account: raghuvar-arora-au2
 All tests ok. No issues observed
 
 
-##Project 2
+## Project 2
+
+All tests ok. No issues observed
