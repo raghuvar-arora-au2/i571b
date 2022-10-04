@@ -1,4 +1,4 @@
-# cs571-prj1
+# cs571b
 
 Name: Raghuvar arora
 
