@@ -117,15 +117,15 @@ testQuadraticRoots = do
 
 -- Hint: use a local auxiliary function
 
-factorial:: Int -> Int
-factorial 0 = 1
+factorial:: Float -> Float
+factorial 0.0 = 1
 factorial n = n * factorial(n - 1)
 
 powers start = [start] ++ powers (start+1)
 
 expn ::  Float -> [Float]
 expn x = 
-    map:(\p->(x^p)/(factorial x))(powers 0)
+    map(\p->(x**p)/(factorial p))(powers 0)
 
 -- epsilon equality for floats; does not work if close to 0.0
 floatEq f1 f2 = (abs (f2 - f1)/f1) < 0.0001
