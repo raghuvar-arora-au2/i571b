@@ -1,6 +1,6 @@
 -module(prj5_sol).
 -include_lib("eunit/include/eunit.hrl").
--compile([nowarn_export_all, export_all]).
+-compile([nowarn_export_all, export_all, print, comp]).
 
 %---------------------------- Test Control ------------------------------
 %% Enabled Tests
@@ -12,10 +12,10 @@
 
   %move this down to just before -endif when project completed
 -define(test_dept_employees1, enabled).
-% -define(test_dept_employees2, enabled).
-% -define(test_dept_employees3, enabled).
-% -define(test_delete_employee, enabled).
-% -define(test_upsert_employee, enabled).
+-define(test_dept_employees2, enabled).
+-define(test_dept_employees3, enabled).
+-define(test_delete_employee, enabled).
+-define(test_upsert_employee, enabled). % test cases failing
 % -define(test_find_employees, enabled).
 % -define(test_employees_req, enabled).
 % -define(test_employees_req_with_sort, enabled).
@@ -32,7 +32,7 @@
 % trace_level == 0:  no tracing
 % trace_level == 1:  function + test-name 
 % trace_level == 2:  function + test-name + args + result
--define(trace_level, 0).
+-define(trace_level, 1).
 -if(?trace_level == 2).
   -define(test_trace(Test, F, Args, Result),
 	  io:format(standard_error, "~p:~p: ~p =~n~p~n",
@@ -129,7 +129,16 @@ upsert_employees() -> [ ?Tom1, ?Jane1, ?Joe1 ].
 % having dept = Dept.
 % Restriction: must be implemented using recursion without using any library 
 % functions.
-dept_employees1(_Dept, []) -> 'TODO'.
+dept_employees1(_Dept, []) -> [];
+dept_employees1(_Dept, [Head|Tail])->
+    if
+        Head#employee.dept==_Dept ->
+            [Head | dept_employees1(_Dept, Tail)];
+        true ->
+            dept_employees1(_Dept, Tail)
+
+    end.
+
 
 dept_employees_test_specs() -> 
     Es = ?Employees,
@@ -152,7 +161,11 @@ dept_employees1_test_() ->
 % dept_employees2(Dept, Employees): return sub-list of Employees
 % having dept = Dept.
 % Restriction: must be implemented using a single call to lists:filter().
-dept_employees2(Dept, Employees) -> 'TODO'.
+dept_employees2(Dept, Employees) -> 
+    lists:filter(
+        fun(Emp) -> Emp#employee.dept==Dept end, 
+        Employees
+    ).
 
 -ifdef(test_dept_employees2).
 dept_employees2_test_() ->
@@ -165,7 +178,8 @@ dept_employees2_test_() ->
 % dept_employees3(Dept, Employees): return sub-list of Employees
 % having dept = Dept.
 % Restriction: must be implemented using a list comprehension.
-dept_employees3(Dept, Employees) -> 'TODO'.
+dept_employees3(Dept, Employees) -> 
+    [X || X <- Employees, X#employee.dept==Dept].
 
 -ifdef(test_dept_employees3).
 dept_employees3_test_() ->
@@ -178,7 +192,8 @@ dept_employees3_test_() ->
 % Given a list Employees of employees, return sublist of Employees
 % with employee with name=Name removed.  It is ok if Name does not exist.
 % Hint: use a list comprehension 
-delete_employee(Name, Employees) -> 'TODO'.
+delete_employee(Name, Employees) -> 
+    [X || X <- Employees, X#employee.name=/=Name].
 
 %% returns list of pairs: { Args, Result }, where Args is list of
 %% arguments to function and Result should be the value returned
@@ -207,7 +222,18 @@ delete_employee_test_() ->
 % an employee E1 with E1.name == E.name, then return Employees
 % with E1 replaced by E, otherwise return Employees with
 % [E] appended.
-upsert_employee(E, Employees) -> 'TODO'.
+% upsert_employee(E, Employees) -> 'TODO'.
+
+upsert_employee(_,[]) -> [];
+
+upsert_employee(E, [Head|Tail])->
+    if
+        Head#employee.name==E#employee.name ->
+            [E | upsert_employee(E, Tail)];
+        true ->
+            [Head | upsert_employee(E, Tail)]
+
+    end.
 
 
 %% returns list of pairs: { Args, Result }, where Args is list of
@@ -244,7 +270,8 @@ upsert_employee_test_() ->
 % for which all P in Preds return true.
 % Restriction: may not use recursion.
 % Hint: consider using a list comprehension with lists:all/2.
-find_employees(Preds, Employees) -> 'TODO'.
+find_employees(Preds, Employees) ->
+    [Elem || Elem <- Employees, lists:all(fun(Pred) -> Pred(Elem) end, Preds)].
 
 find_employees_test_specs() -> 
   Es = ?Employees,
@@ -297,7 +324,44 @@ find_employees_test_() ->
 %   _:                    return an error-result with a suitable ErrString.
 % Hint: use io_lib:format(Format, Args) to build suitable error strings,
 % for example: lists:flatten(io_lib:format("bad Req ~p", [Req]))
-employees_req(Req, Employees) -> 'TODO'.
+% employees_req(Req, Employees) -> 
+%   if
+%     tuple_size(Req)==2 ->
+%       {Command, Payload} = Req;
+%     true ->
+%       {Command} = Req,
+%       Payload = void
+%   end,
+
+%   if
+%     Command ==delete ->
+%       {ok, void, delete_employee(Payload, Employees)};
+%     Command == dump ->
+%       {ok, Employees, Employees};
+%     Command == upsert ->
+%       {ok, void, upsert_employee(Payload, Employees)}
+%   end.
+
+employees_req(Req, Employees) ->
+    case Req of
+        {delete, Name} ->
+            {ok, void, delete_employee(Name, Employees)};
+        {dump} ->
+            {ok, Employees, Employees};
+        {find, Preds} ->
+            {ok, find_employees(Preds, Employees), Employees};
+        {read, Name} ->
+            Preds = [fun(Employee) -> Employee#employee.name == Name end],
+            case find_employees(Preds, Employees) of
+                [Result] -> {ok, Result, Employees};
+                _ -> {err, "Employee not found", Employees}
+            end;
+        {upsert, Employee} ->
+            {ok, void, upsert_employee(Employee, Employees)};
+        _ ->
+            {err, "Invalid request", Employees}
+    end.
+
 
 %% map upsert_employee_test_specs into args-result pairs suitable
 %% for employees_req({upsert, _}, ...).
@@ -351,7 +415,17 @@ employees_req_test_() ->
 % { sort } which should return { ok, void, SortedEmployees }
 % where SortedEmployees is Employees sorted in ascending order by name.
 % Hint: use lists:sort/2 to sort, delegate all non-sort Fns to employees_req/2.
-employees_req_with_sort(Req, Employees) -> 'TODO'.
+
+
+employees_req_with_sort(Req, Employees) -> 
+  case Req of
+    {sort} -> 
+      { ok, void, lists:sort(fun(A,B) -> A#employee.name<B#employee.name end, Employees) };
+
+    _ ->
+      employees_req(Req, Employees)
+  end.
+
 
 employees_req_with_sort_test_specs() ->
     [ { sort, [{sort}, ?Employees], { ok, void, ?SortedEmployees } } ] ++
@@ -389,15 +463,45 @@ employees_req_with_sort_test_() ->
 % then a message of the form { self(), { Status, Result }} should be
 % sent back to the client and the server should continue with
 % (possibly) new Employees1 and current processing function Fn.
-start_employees_server(Employees, Fn) -> 'TODO'.
+start_employees_server(Employees, Fn) -> 
+  ServerPid = spawn(fun() -> server_loop(Employees, Fn) end),
+    register(emps, ServerPid),
+    ServerPid.
 
 % stop previously started server with registered ID emps.
 % should return {ok, stopped}.
-stop_employees_server() -> 'TODO'.
+stop_employees_server() -> 
+    unregister(emps),
+    whereis(emps) ! {self(), {stop}},
+    {ok, stopped}.
 
 % set request Req to server registered under ID emps and return 
 % Result from server.
-employees_client(Req) -> 'TODO'.
+employees_client(Req) -> 
+  ServerPid = whereis(emps),
+  ServerPid ! {self(), Req},
+  % Wait for a response message from the server process and return the result
+  receive
+      {_ServerPid, {Status, Result}} ->
+          {Status, Result}
+  end.
+
+
+server_loop(Employees, Fn) ->
+    receive
+        % Handle the stop Req by terminating the server process
+        {_ClientPid, {stop}} ->
+            exit(normal);
+        % Handle the new_fn Req by replacing the current processing function with Fn1
+        {_ClientPid, {new_fn, Fn1}} ->
+            server_loop(Employees, Fn1);
+        % Handle all other Reqs by forwarding them to the current processing function
+        % and sending a response message back to the client
+        {ClientPid, Req} ->
+            {Status, Result, Employees1} = apply(Fn, [Req, Employees]),
+            ClientPid ! {self(), {Status, Result}},
+            server_loop(Employees1, Fn)
+    end.
 
 
 %% map employees_req test to a employees_client test
