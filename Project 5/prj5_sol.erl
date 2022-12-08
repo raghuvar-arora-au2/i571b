@@ -1,6 +1,6 @@
 -module(prj5_sol).
 -include_lib("eunit/include/eunit.hrl").
--compile([nowarn_export_all, export_all, print, comp]).
+-compile([nowarn_export_all, export_all]).
 
 %---------------------------- Test Control ------------------------------
 %% Enabled Tests
@@ -15,16 +15,16 @@
 -define(test_dept_employees2, enabled).
 -define(test_dept_employees3, enabled).
 -define(test_delete_employee, enabled).
--define(test_upsert_employee, enabled). % test cases failing
-% -define(test_find_employees, enabled).
-% -define(test_employees_req, enabled).
-% -define(test_employees_req_with_sort, enabled).
-% -define(test_employees_client_no_sort, enabled).
-% -define(test_employees_client_with_sort_dosort, enabled).
-% -define(test_employees_client_with_sort, enabled).
-% -define(test_employees_client_no_sort_mutate, enabled).
-% -define(test_employees_client_with_sort_mutate, enabled).
-% -define(test_employees_client_hot_reload, enabled).
+-define(test_upsert_employee, enabled).
+-define(test_find_employees, enabled).
+-define(test_employees_req, enabled).
+-define(test_employees_req_with_sort, enabled).
+-define(test_employees_client_no_sort, enabled).
+-define(test_employees_client_with_sort_dosort, enabled).
+-define(test_employees_client_with_sort, enabled).
+-define(test_employees_client_no_sort_mutate, enabled).
+-define(test_employees_client_with_sort_mutate, enabled).
+-define(test_employees_client_hot_reload, enabled).
 -if(false).
 -endif.
 
@@ -32,7 +32,7 @@
 % trace_level == 0:  no tracing
 % trace_level == 1:  function + test-name 
 % trace_level == 2:  function + test-name + args + result
--define(trace_level, 1).
+-define(trace_level, 0).
 -if(?trace_level == 2).
   -define(test_trace(Test, F, Args, Result),
 	  io:format(standard_error, "~p:~p: ~p =~n~p~n",
@@ -139,7 +139,6 @@ dept_employees1(_Dept, [Head|Tail])->
 
     end.
 
-
 dept_employees_test_specs() -> 
     Es = ?Employees,
     [ { cs_empty, [cs, []], [] },
@@ -166,6 +165,7 @@ dept_employees2(Dept, Employees) ->
         fun(Emp) -> Emp#employee.dept==Dept end, 
         Employees
     ).
+
 
 -ifdef(test_dept_employees2).
 dept_employees2_test_() ->
@@ -201,10 +201,10 @@ delete_employee(Name, Employees) ->
 delete_employee_test_specs() -> 
     Es = ?Employees,
     [
-     { delete_intermediate, 
+     { delete_last, 
        [ jane, Es ], 
        [ ?Tom, ?Joan, ?Bill, ?John, ?Sue, ?Alice, ?Harry, ?Larry, ?Erwin] }, 
-     { delete_last,
+     { delete_intermediate,
        [ joan, Es ], 
        [ ?Tom, ?Bill, ?John, ?Sue, ?Alice, ?Harry, ?Larry, ?Erwin, ?Jane] }, 
      { delete_nonexisting, [ joe, Es ], Es }
@@ -222,18 +222,20 @@ delete_employee_test_() ->
 % an employee E1 with E1.name == E.name, then return Employees
 % with E1 replaced by E, otherwise return Employees with
 % [E] appended.
-% upsert_employee(E, Employees) -> 'TODO'.
+% upsert_employee(E,[]) -> [];
+% upsert_employee(E, [Head|Tail])->
+%     if
+%         Head#employee.name==E#employee.name ->
+%             [E | upsert_employee(E, Tail)];
+%         true ->
+%             [Head | upsert_employee(E, Tail)]
 
-upsert_employee(_,[]) -> [];
+%     end.
 
-upsert_employee(E, [Head|Tail])->
-    if
-        Head#employee.name==E#employee.name ->
-            [E | upsert_employee(E, Tail)];
-        true ->
-            [Head | upsert_employee(E, Tail)]
+upsert_employee(E, [H|T])  when E#employee.name==H#employee.name -> [E|T];
+upsert_employee(E, [H|T]) when E#employee.name=/= H#employee.name -> [H | upsert_employee(E,T)];
+upsert_employee(E, []) -> [E].
 
-    end.
 
 
 %% returns list of pairs: { Args, Result }, where Args is list of
@@ -324,24 +326,6 @@ find_employees_test_() ->
 %   _:                    return an error-result with a suitable ErrString.
 % Hint: use io_lib:format(Format, Args) to build suitable error strings,
 % for example: lists:flatten(io_lib:format("bad Req ~p", [Req]))
-% employees_req(Req, Employees) -> 
-%   if
-%     tuple_size(Req)==2 ->
-%       {Command, Payload} = Req;
-%     true ->
-%       {Command} = Req,
-%       Payload = void
-%   end,
-
-%   if
-%     Command ==delete ->
-%       {ok, void, delete_employee(Payload, Employees)};
-%     Command == dump ->
-%       {ok, Employees, Employees};
-%     Command == upsert ->
-%       {ok, void, upsert_employee(Payload, Employees)}
-%   end.
-
 employees_req(Req, Employees) ->
     case Req of
         {delete, Name} ->
@@ -416,7 +400,6 @@ employees_req_test_() ->
 % where SortedEmployees is Employees sorted in ascending order by name.
 % Hint: use lists:sort/2 to sort, delegate all non-sort Fns to employees_req/2.
 
-
 employees_req_with_sort(Req, Employees) -> 
   case Req of
     {sort} -> 
@@ -454,15 +437,23 @@ employees_req_with_sort_test_() ->
 % and return PID of started process.
 % 
 % The server should accept messages of the form { Pid, Req } where Pid
-% is the client's PID, while Req is one of: { stop }: terminate the
-% server.  { new_fn, Fn1 }: continue server with processing function
-% Fn replaced by Fn1.  All other requests Req should be forwarded to
-% Fn as Fn(Req, Employees), where Fn is the processing function and
-% Employees are the current employees in the server state.  Assuming
-% the result of the forwarded call is { Status, Result, Employees1 },
-% then a message of the form { self(), { Status, Result }} should be
-% sent back to the client and the server should continue with
-% (possibly) new Employees1 and current processing function Fn.
+% is the client's PID.  The action taken by the server depends on Req:
+% { stop }:            Terminate the server after sending a { ok, stopped}
+%		       response to the client.   
+% { new_fn, Fn1 }:     Continue server with processing function
+%                      Fn replaced by Fn1 after sending a {ok, void} 
+%                      response to the client. 
+%  All other requests: Req should be forwarded to Fn as Fn(Req, Employees),
+%                      where Fn is the current processing function 
+%                      and Employees are the current employees in the 
+%                      server state.  Assuming the result of the forwarded
+%                      call is { Status, Result, Employees1 }, then the server
+%                      should continue with (possibly) new Employees1 and
+%                      current processing function Fn after sending a
+%                      { Status, Result } response to the client.
+% The actual messages returned to the client should always include the
+% server's PID, so they look like { self(), Response } where Response is
+% the response described above.
 start_employees_server(Employees, Fn) -> 
   ServerPid = spawn(fun() -> server_loop(Employees, Fn) end),
     register(emps, ServerPid),
