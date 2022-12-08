@@ -32,7 +32,7 @@
 % trace_level == 0:  no tracing
 % trace_level == 1:  function + test-name 
 % trace_level == 2:  function + test-name + args + result
--define(trace_level, 0).
+-define(trace_level, 1).
 -if(?trace_level == 2).
   -define(test_trace(Test, F, Args, Result),
 	  io:format(standard_error, "~p:~p: ~p =~n~p~n",
@@ -454,45 +454,49 @@ employees_req_with_sort_test_() ->
 % The actual messages returned to the client should always include the
 % server's PID, so they look like { self(), Response } where Response is
 % the response described above.
+
+
+server_loop(Employees, Fn) ->
+  receive
+        % Handle the stop Req by terminating the server process
+        
+        {ClientPid, {new_fn, Fn1}} ->
+        	ClientPid! {self(),{ok, void}},
+            server_loop(Employees, Fn1);
+        {_, {stop}} ->
+            stop_employees_server();
+        {ClientPid, Req} ->
+            {Status, Result, Employees1} = Fn(Req, Employees),
+            ClientPid ! {self(), {Status, Result}},
+            server_loop(Employees1, Fn)
+    end.
+
+
+
 start_employees_server(Employees, Fn) -> 
-  ServerPid = spawn(fun() -> server_loop(Employees, Fn) end),
+	ServerPid = spawn(fun() -> server_loop(Employees, Fn) end),
     register(emps, ServerPid),
     ServerPid.
 
 % stop previously started server with registered ID emps.
 % should return {ok, stopped}.
 stop_employees_server() -> 
-    unregister(emps),
-    whereis(emps) ! {self(), {stop}},
-    {ok, stopped}.
+    whereis(emps) ! stop,
+    unregister(emps), 
+    {self(),{ok, stopped}}.
+
 
 % set request Req to server registered under ID emps and return 
 % Result from server.
 employees_client(Req) -> 
-  ServerPid = whereis(emps),
-  ServerPid ! {self(), Req},
-  % Wait for a response message from the server process and return the result
-  receive
-      {_ServerPid, {Status, Result}} ->
-          {Status, Result}
-  end.
+	ServerPid = whereis(emps),
+	ServerPid ! {self(), Req},
+	receive
+		{_, Response} ->
+			Response
+	end.
 
 
-server_loop(Employees, Fn) ->
-    receive
-        % Handle the stop Req by terminating the server process
-        {_ClientPid, {stop}} ->
-            exit(normal);
-        % Handle the new_fn Req by replacing the current processing function with Fn1
-        {_ClientPid, {new_fn, Fn1}} ->
-            server_loop(Employees, Fn1);
-        % Handle all other Reqs by forwarding them to the current processing function
-        % and sending a response message back to the client
-        {ClientPid, Req} ->
-            {Status, Result, Employees1} = apply(Fn, [Req, Employees]),
-            ClientPid ! {self(), {Status, Result}},
-            server_loop(Employees1, Fn)
-    end.
 
 
 %% map employees_req test to a employees_client test
@@ -617,7 +621,8 @@ employees_client_hot_reload_test_() ->
       fun () -> start_employees_server(Es, fun employees_req_with_sort/2) end,
       fun (_) ->  stop_employees_server() end,
       make_tests(fun employees_client/1, 
-		 [ { first_sort, [{sort}], {ok, void} },
+		 [ 
+      { first_sort, [{sort}], {ok, void} },
 		   { dump1, [{dump}], {ok, ?SortedEmployees} },
 		   { new_fn1, [{new_fn, fun employees_req/2}], {ok, void} },
 		   { sort_err, [{sort}], {err}, Ignore },
